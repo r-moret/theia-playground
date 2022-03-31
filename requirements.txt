@@ -6,5 +6,5 @@ matplotlib
 seaborn
 plotly
 scikit-learn
-tensorflow
-keras
+tensorflow == 2.7
+opencv-python
