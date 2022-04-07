@@ -21,8 +21,8 @@ def resize_images(
         img = cv.imread(f"{originals_folder}/{image_name}", mode)
         label = cv.imread(f"{labels_folder}/{image_name}", mode)
 
-        resized_img = cv.resize(img, new_size)
-        resized_label = cv.resize(label, new_size)
+        resized_img = cv.resize(img, new_size, interpolation=cv.INTER_NEAREST)
+        resized_label = cv.resize(label, new_size, interpolation=cv.INTER_NEAREST)
 
         cv.imwrite(f"{originals_folder}/{image_name}", resized_img)
         cv.imwrite(f"{labels_folder}/{image_name}", resized_label)
@@ -112,5 +112,5 @@ if __name__ == "__main__":
     slice_and_reformat_images(f"{NEW_FOLDER}/originals", f"{NEW_FOLDER}/labels")
 
     resize_images(
-        f"{NEW_FOLDER}/originals", f"{NEW_FOLDER}/labels", new_size=(572, 572)
+        f"{NEW_FOLDER}/originals", f"{NEW_FOLDER}/labels", new_size=(512, 512)
     )
