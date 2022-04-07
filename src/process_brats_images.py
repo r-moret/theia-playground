@@ -94,6 +94,22 @@ def slice_and_reformat_images(
         os.remove(f"{labels_folder}/{image}")
 
 
+def separate_labels_in_dimensions(segmentation_img: np.array) -> np.array:
+    labels = np.unique(segmentation_img)
+
+    seg_shape = segmentation_img.shape
+    new_segmentation = np.zeros((seg_shape[0], seg_shape[1], len(labels)))
+
+    for i, label in enumerate(labels):
+        masked = np.ma.masked_not_equal(segmentation_img, label)
+        masked[~masked.mask] = 1
+        masked = masked.filled(0)
+        
+        new_segmentation[:, :, i] = masked
+
+    return new_segmentation
+    
+
 if __name__ == "__main__":
 
     OLD_FOLDER = "data/BRATS/raw/MICCAI_BraTS_2018_Data_Training/HGG"
