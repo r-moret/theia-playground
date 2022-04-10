@@ -18,14 +18,16 @@ def resize_images(
 ):
     print("Resizing...")
     for image_name in tqdm(os.listdir(originals_folder), ncols=70):
+        label_name = image_name.split(".")[0] + ".npy"
+
         img = cv.imread(f"{originals_folder}/{image_name}", mode)
-        label = cv.imread(f"{labels_folder}/{image_name}", mode)
+        label = np.load(f"{labels_folder}/{label_name}")
 
         resized_img = cv.resize(img, new_size, interpolation=cv.INTER_NEAREST)
         resized_label = cv.resize(label, new_size, interpolation=cv.INTER_NEAREST)
 
         cv.imwrite(f"{originals_folder}/{image_name}", resized_img)
-        cv.imwrite(f"{labels_folder}/{image_name}", resized_label)
+        np.save(f"{labels_folder}/{label_name}", resized_label)
 
 
 def move_and_rename_images(
@@ -88,14 +90,16 @@ def slice_and_reformat_images(
 
             name = image.split(".")[0]
             cv.imwrite(f"{originals_folder}/{name}_{i}{new_format}", img_slice)
-            cv.imwrite(f"{labels_folder}/{name}_{i}{new_format}", label_slice)
+
+            label_slice = separate_labels_in_dimensions(label_slice)
+            np.save(f"{labels_folder}/{name}_{i}.npy", label_slice)
 
         os.remove(f"{originals_folder}/{image}")
         os.remove(f"{labels_folder}/{image}")
 
 
 def separate_labels_in_dimensions(segmentation_img: np.array) -> np.array:
-    labels = np.unique(segmentation_img)
+    labels = np.sort(np.unique(segmentation_img))
 
     seg_shape = segmentation_img.shape
     new_segmentation = np.zeros((seg_shape[0], seg_shape[1], len(labels)))
@@ -104,11 +108,11 @@ def separate_labels_in_dimensions(segmentation_img: np.array) -> np.array:
         masked = np.ma.masked_not_equal(segmentation_img, label)
         masked[~masked.mask] = 1
         masked = masked.filled(0)
-        
+
         new_segmentation[:, :, i] = masked
 
     return new_segmentation
-    
+
 
 if __name__ == "__main__":
 
