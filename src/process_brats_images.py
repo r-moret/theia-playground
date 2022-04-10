@@ -5,7 +5,7 @@ import cv2 as cv
 import nibabel as nib
 import numpy as np
 
-from typing import Tuple
+from typing import Tuple, List
 from tqdm import tqdm
 
 
@@ -68,6 +68,7 @@ def move_and_rename_images(
 def slice_and_reformat_images(
     originals_folder: str,
     labels_folder: str,
+    classes: List[int],
     slicing_range: Tuple[int, int] = (50, 110),
     step: int = 10,
     new_format: str = ".png",
@@ -91,20 +92,20 @@ def slice_and_reformat_images(
             name = image.split(".")[0]
             cv.imwrite(f"{originals_folder}/{name}_{i}{new_format}", img_slice)
 
-            label_slice = separate_labels_in_dimensions(label_slice)
+            label_slice = separate_labels_in_dimensions(label_slice, classes)
             np.save(f"{labels_folder}/{name}_{i}.npy", label_slice)
 
         os.remove(f"{originals_folder}/{image}")
         os.remove(f"{labels_folder}/{image}")
 
 
-def separate_labels_in_dimensions(segmentation_img: np.array) -> np.array:
-    labels = np.sort(np.unique(segmentation_img))
-
+def separate_labels_in_dimensions(
+    segmentation_img: np.array, classes: List[int]
+) -> np.array:
     seg_shape = segmentation_img.shape
-    new_segmentation = np.zeros((seg_shape[0], seg_shape[1], len(labels)))
+    new_segmentation = np.zeros((seg_shape[0], seg_shape[1], len(classes)))
 
-    for i, label in enumerate(labels):
+    for i, label in enumerate(classes):
         masked = np.ma.masked_not_equal(segmentation_img, label)
         masked[~masked.mask] = 1
         masked = masked.filled(0)
@@ -129,7 +130,9 @@ if __name__ == "__main__":
         label_file_termination=SEG_EXTENSION,
     )
 
-    slice_and_reformat_images(f"{NEW_FOLDER}/originals", f"{NEW_FOLDER}/labels")
+    slice_and_reformat_images(
+        f"{NEW_FOLDER}/originals", f"{NEW_FOLDER}/labels", [0, 1, 2, 4]
+    )
 
     resize_images(
         f"{NEW_FOLDER}/originals", f"{NEW_FOLDER}/labels", new_size=(512, 512)
